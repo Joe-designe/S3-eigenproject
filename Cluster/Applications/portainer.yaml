@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portainer
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://portainer.github.io/k8s/'
+    targetRevision: '2.33.5' # Check voor nieuwere versies indien gewenst
+    chart: portainer
+    helm:
+      values: |
+        service:
+          type: LoadBalancer
+        persistence:
+          enabled: true
+          storageClassName: longhorn
+          size: 10Gi
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: portainer
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
