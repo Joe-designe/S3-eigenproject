@@ -1,0 +1,25 @@
+# prepare_nodes.yml
+---
+- name: Bereid nodes voor op K3s en Longhorn
+  hosts: k3s_cluster
+  become: true  # Dit betekent: voer uit als root (sudo)
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Installeer Longhorn dependencies (iscsi & nfs)
+      apt:
+        name:
+          - open-iscsi
+          - nfs-common
+          - curl
+        state: present
+
+    - name: Enable en start iscsid service (nodig voor Longhorn)
+      service:
+        name: iscsid
+        state: started
+        enabled: yes
