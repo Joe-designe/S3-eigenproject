@@ -14,7 +14,7 @@ spec:
         persistence:
           defaultClass: true   # Maakt Longhorn de standaard opslag
         defaultSettings:
-          createDefaultDiskLabeledNodes: true
+          createDefaultDiskLabeledNodes: false
         helmPreUpgradeCheckerJob:
           enabled: false
   destination:
