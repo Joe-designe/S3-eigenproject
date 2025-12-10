@@ -13,7 +13,7 @@
     - name: Download en installeer ArgoCD (Core installatie)
       kubernetes.core.k8s:
         state: present
-        src: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+        src: https://raw.githubusercontent.com/argoproj/argo-cd/v3.2.1/manifests/install.yaml
         namespace: argocd
 
     - name: Wacht tot ArgoCD pods starten 
