@@ -7,12 +7,18 @@ spec:
   project: default
   source:
     repoURL: 'https://portainer.github.io/k8s/'
-    targetRevision: '2.33.5' # Check voor nieuwere versies indien gewenst
+    targetRevision: '2.33.5' #Check voor nieuwe versie indien mogelijk
     chart: portainer
     helm:
       values: |
         service:
           type: LoadBalancer
+          # Hier mappen we de standaard HTTPS poort naar buiten
+          httpsPort: 9443
+          # Optioneel: Zet HTTP poort uit als je alleen HTTPS wilt
+          # httpPort: 9000 
+        tls:
+          force: true  # Dwingt HTTPS af
         persistence:
           enabled: true
           storageClassName: longhorn
