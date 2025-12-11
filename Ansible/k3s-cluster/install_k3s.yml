@@ -42,31 +42,47 @@
         dest: ~/.kube/config
         flat: yes
 
-- name: 4. Pas config aan op Ansible VM
+- name: 4. Configureer Ansible VM als Kubernetes Client
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    - name: Maak .kube map aan
+    # --- STAP 1: Installeer kubectl (indien nodig) ---
+    - name: Download en installeer kubectl binary
+      become: true
+      get_url:
+        # We pakken hier een recente stabiele versie
+        url: "https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: '0755'
+
+    # --- STAP 2: Map voorbereiden ---
+    - name: Maak .kube map aan in home directory
       file:
         path: ~/.kube
         state: directory
         mode: '0700'
 
-    - name: Pas rechten aan van config
+    # --- STAP 3: Config ophalen van de Master ---
+    # We gebruiken hier 'delegate_to' om het bestand van de master (server) naar hier te trekken
+    - name: Haal kubeconfig op van de master node
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: ~/.kube/config
+        flat: yes
+      delegate_to: "{{ groups['server'][0] }}"
+      become: true # Nodig om /etc/rancher/k3s/k3s.yaml te lezen op de master
+
+    - name: Pas rechten aan van config (zodat jij hem mag lezen)
       file:
         path: ~/.kube/config
         mode: '0600'
 
-    - name: Zet Master IP in config (vervang localhost)
+    # --- STAP 4: De Fix (IP adres aanpassen) ---
+    - name: Wijzig 127.0.0.1 naar het echte Master IP
       replace:
         path: ~/.kube/config
-        regexp: '192.168.124.31'
-        replace: "{{ hostvars[groups['server'][0]]['inventory_hostname'] }}"
-      
-    - name: Installeer kubectl op Ansible VM (indien niet aanwezig)
-      become: true
-      get_url:
-        url: "https://dl.k8s.io/release/v1.29.0/bin/linux/amd64/kubectl"
-        dest: /usr/local/bin/kubectl
-        mode: '0755'
+        # Zoek naar de localhost verwijzing die K3s er standaard in zet
+        regexp: 'https://127.0.0.1:6443'
+        # Vervang dit door het IP van de eerste server uit je inventory
+        replace: "https://{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}:6443"
