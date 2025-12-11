@@ -1,25 +1,72 @@
-# prepare_nodes.yml
 ---
-- name: Bereid nodes voor op K3s en Longhorn
+- name: Bereid nodes voor op K3s en Longhorn (Complete Setup)
   hosts: k3s_cluster
-  become: true  # Dit betekent: voer uit als root (sudo)
-
+  become: true
   tasks:
+
+    # --- STAP 1: Basis Updates & Packages ---
     - name: Update apt cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
 
-    - name: Installeer Longhorn dependencies (iscsi & nfs)
+    - name: Installeer dependencies (Longhorn & K3s)
       apt:
         name:
           - open-iscsi
           - nfs-common
           - curl
+          - cryptsetup    # Handig voor encrypted volumes
+          - util-linux
         state: present
 
-    - name: Enable en start iscsid service (nodig voor Longhorn)
+    # --- STAP 2: Kernel Modules (Nodig voor Longhorn) ---
+    - name: Laad dm_crypt module direct
+      community.general.modprobe:
+        name: dm_crypt
+        state: present
+      # Fallback voor als community.general niet is geïnstalleerd:
+      ignore_errors: yes
+
+    - name: Zorg dat dm_crypt laadt bij opstarten (persistency)
+      lineinfile:
+        path: /etc/modules
+        line: 'dm_crypt'
+        state: present
+
+    # --- STAP 3: Schakel conflicterende services uit (Multipath) ---
+    - name: Stop multipathd service (Blokkeert Longhorn disks)
+      service:
+        name: multipathd
+        state: stopped
+      ignore_errors: yes
+
+    - name: Disable en MASK multipathd (Zodat hij nooit meer start)
+      systemd:
+        name: multipathd
+        enabled: no
+        masked: yes
+      ignore_errors: yes
+
+    # --- STAP 4: iSCSI Identiteit (Unieke ID fix voor gekloonde VM's) ---
+    - name: Genereer unieke iSCSI InitiatorName (Voorkomt flip-flopping volumes)
+      shell: 'echo "InitiatorName=$(/sbin/iscsi-iname)" > /etc/iscsi/initiatorname.iscsi'
+      # Voer dit alleen uit als het bestand nog niet bestaat of leeg is (veiligheid)
+      args:
+        creates: /etc/iscsi/initiatorname.iscsi_custom_generated 
+       
+      
+
+    # --- STAP 5: Mapstructuur voorbereiden ---
+    - name: Maak Longhorn data map aan
+      file:
+        path: /var/lib/longhorn
+        state: directory
+        mode: '0777' # Zorgt dat Longhorn altijd mag schrijven
+
+    # --- STAP 6: Start Services ---
+    - name: Start en enable iscsid service
       service:
         name: iscsid
-        state: started
+        state: restarted # Restart om zeker te zijn dat nieuwe config/naam geladen is
         enabled: yes
