@@ -18,14 +18,30 @@
           - curl
           - cryptsetup    # Handig voor encrypted volumes
           - util-linux
+          - chrony        # TOEGEVOEGD: NTP service voor tijdsynchronisatie
         state: present
+
+    # --- STAP 1.5: Tijd & NTP Configuratie (Cruciaal voor Cluster) ---
+    - name: Stel tijdzone in op Europe/Amsterdam
+      timezone:
+        name: Europe/Amsterdam
+
+    - name: Zorg dat Chrony (NTP) draait en enabled is
+      service:
+        name: chrony
+        state: started
+        enabled: yes
+
+    - name: Forceer directe tijdsynchronisatie (optioneel, fixt grote verschillen direct)
+      command: chronyc makestep
+      changed_when: false
+      ignore_errors: yes
 
     # --- STAP 2: Kernel Modules (Nodig voor Longhorn) ---
     - name: Laad dm_crypt module direct
       community.general.modprobe:
         name: dm_crypt
         state: present
-      # Fallback voor als community.general niet is geïnstalleerd:
       ignore_errors: yes
 
     - name: Zorg dat dm_crypt laadt bij opstarten (persistency)
@@ -51,12 +67,9 @@
     # --- STAP 4: iSCSI Identiteit (Unieke ID fix voor gekloonde VM's) ---
     - name: Genereer unieke iSCSI InitiatorName (Voorkomt flip-flopping volumes)
       shell: 'echo "InitiatorName=$(/sbin/iscsi-iname)" > /etc/iscsi/initiatorname.iscsi'
-      # Voer dit alleen uit als het bestand nog niet bestaat of leeg is (veiligheid)
       args:
         creates: /etc/iscsi/initiatorname.iscsi_custom_generated 
        
-      
-
     # --- STAP 5: Mapstructuur voorbereiden ---
     - name: Maak Longhorn data map aan
       file:
@@ -68,5 +81,5 @@
     - name: Start en enable iscsid service
       service:
         name: iscsid
-        state: restarted # Restart om zeker te zijn dat nieuwe config/naam geladen is
+        state: restarted
         enabled: yes
