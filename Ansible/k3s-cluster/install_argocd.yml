@@ -33,8 +33,6 @@
 
     # --- DEEL 2: De Longhorn Fix (Geïntegreerd) ---
     
-    # HIER ZATEN DE FOUTEN: Ik heb quotes "..." toegevoegd en de # weggehaald uit de string.
-
     - name: "[FIX] Maak Longhorn namespace aan (nodig voor SA)"
       kubernetes.core.k8s:
         name: longhorn-system
@@ -78,3 +76,20 @@
       command: kubectl apply -f https://raw.githubusercontent.com/Joe-designe/S3-eigenproject/main/Cluster/root-app.yaml
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+
+    # --- DEEL 4: Wachtwoord tonen ---
+
+    - name: Haal ArgoCD admin wachtwoord op
+      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
+      register: argocd_password
+
+    - name: Toon inloggegevens
+      debug:
+        msg: 
+          - "=============================================="
+          - "ArgoCD is succesvol geïnstalleerd!"
+          - "Gebruikersnaam: admin"
+          - "Wachtwoord: {{ argocd_password.stdout }}"
+          - "=============================================="
