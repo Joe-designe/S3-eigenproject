@@ -32,7 +32,7 @@
         kubectl wait --for=condition=Available deployment/argocd-server 
         -n argocd --timeout=300s
       environment:
-        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+        KUBECONFIG: ~/.kube/config
       register: argocd_ready
       retries: 10
       delay: 30
@@ -41,5 +41,5 @@
     - name: Apply Root App (Bootstrap het cluster)
       command: kubectl apply -f https://raw.githubusercontent.com/Joe-designe/S3-eigenproject/main/Cluster/root-app.yaml
       environment:
-        KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+        KUBECONFIG: ~/.kube/config
       when: argocd_ready.rc == 0
