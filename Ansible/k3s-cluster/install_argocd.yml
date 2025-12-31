@@ -2,6 +2,7 @@
 - name: Installeer ArgoCD
   hosts: localhost
   connection: local
+  gather_facts: true # Zorg dat we omgevingsvariabelen (zoals HOME) kunnen lezen
   tasks:
     - name: Maak ArgoCD namespace aan
       kubernetes.core.k8s:
@@ -16,30 +17,22 @@
         src: https://raw.githubusercontent.com/argoproj/argo-cd/v3.2.1/manifests/install.yaml
         namespace: argocd
 
+    # Deze wacht-stap is voldoende, de tweede verderop is eigenlijk dubbelop
     - name: Wacht tot ArgoCD pods starten 
       shell: kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=300s
-      register: result
-      ignore_errors: yes
+      environment:
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
     - name: Patch ArgoCD service naar LoadBalancer 
       shell: |
         kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
-
-# ... (Je eerdere taken die ArgoCD installeren met Helm/Manifests) ...
-
-    - name: Wacht tot ArgoCD API server klaar is
-      command: >
-        kubectl wait --for=condition=Available deployment/argocd-server 
-        -n argocd --timeout=300s
       environment:
-        KUBECONFIG: ~/.kube/config
-      register: argocd_ready
-      retries: 10
-      delay: 30
-      until: argocd_ready.rc == 0
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
+    # --- De Bootstrap Stap ---
+    
     - name: Apply Root App (Bootstrap het cluster)
       command: kubectl apply -f https://raw.githubusercontent.com/Joe-designe/S3-eigenproject/main/Cluster/root-app.yaml
       environment:
-        KUBECONFIG: ~/.kube/config
-      when: argocd_ready.rc == 0
+        # HIER ZAT DE FOUT: ~ werkt niet bij 'command', ansible_env.HOME wel
+        KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
