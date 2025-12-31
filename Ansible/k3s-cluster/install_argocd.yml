@@ -1,23 +1,25 @@
 ---
-- name: Installeer ArgoCD
+- name: Installeer ArgoCD en Bootstrap Cluster
   hosts: localhost
   connection: local
-  gather_facts: true # Zorg dat we omgevingsvariabelen (zoals HOME) kunnen lezen
+  gather_facts: true
   tasks:
+    # --- DEEL 1: ArgoCD Installatie ---
     - name: Maak ArgoCD namespace aan
       kubernetes.core.k8s:
         name: argocd
         api_version: v1
         kind: Namespace
         state: present
+        kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
 
     - name: Download en installeer ArgoCD (Core installatie)
       kubernetes.core.k8s:
         state: present
         src: https://raw.githubusercontent.com/argoproj/argo-cd/v3.2.1/manifests/install.yaml
         namespace: argocd
+        kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
 
-    # Deze wacht-stap is voldoende, de tweede verderop is eigenlijk dubbelop
     - name: Wacht tot ArgoCD pods starten 
       shell: kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=300s
       environment:
@@ -29,10 +31,50 @@
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
-    # --- De Bootstrap Stap ---
+    # --- DEEL 2: De Longhorn Fix (Geïntegreerd) ---
+    
+    # HIER ZATEN DE FOUTEN: Ik heb quotes "..." toegevoegd en de # weggehaald uit de string.
+
+    - name: "[FIX] Maak Longhorn namespace aan (nodig voor SA)"
+      kubernetes.core.k8s:
+        name: longhorn-system
+        api_version: v1
+        kind: Namespace
+        state: present
+        kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
+
+    - name: "[FIX] Maak Longhorn ServiceAccount aan"
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
+        definition:
+          apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            name: longhorn-service-account
+            namespace: longhorn-system
+
+    - name: "[FIX] Maak Longhorn ClusterRoleBinding aan"
+      kubernetes.core.k8s:
+        state: present
+        kubeconfig: "{{ ansible_env.HOME }}/.kube/config"
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: longhorn-service-account-fix
+          subjects:
+          - kind: ServiceAccount
+            name: longhorn-service-account
+            namespace: longhorn-system
+          roleRef:
+            kind: ClusterRole
+            name: cluster-admin
+            apiGroup: rbac.authorization.k8s.io
+
+    # --- DEEL 3: De Bootstrap Stap ---
     
     - name: Apply Root App (Bootstrap het cluster)
       command: kubectl apply -f https://raw.githubusercontent.com/Joe-designe/S3-eigenproject/main/Cluster/root-app.yaml
       environment:
-        # HIER ZAT DE FOUT: ~ werkt niet bij 'command', ansible_env.HOME wel
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
