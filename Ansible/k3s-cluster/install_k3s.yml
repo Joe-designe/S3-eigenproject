@@ -79,7 +79,7 @@
         mode: '0600'
 
     # --- STAP 4: De Fix (IP adres aanpassen) ---
-    - name: Wijzig 127.0.0.1 naar het echte Master IP
+    - name: Wijzigt 127.0.0.1 naar het echte Master IP
       replace:
         path: ~/.kube/config
         # Zoek naar de localhost verwijzing die K3s er standaard in zet
