@@ -32,57 +32,49 @@
       args:
         creates: /usr/local/bin/k3s-agent
 
-- name: 3. Configureer Ansible VM als Controller
+- name: 3. Configureer Ansible VM en haal Config op
   hosts: server
   become: true
   tasks:
+    # Dit haalt het bestand van de SERVER naar je ANSIBLE VM
     - name: Haal kubeconfig op naar Ansible VM
       fetch:
         src: /etc/rancher/k3s/k3s.yaml
         dest: ~/.kube/config
         flat: yes
 
-- name: 4. Configureer Ansible VM als Kubernetes Client
+- name: 4. Configureer lokaal kubectl (Ansible VM)
   hosts: localhost
   connection: local
   gather_facts: false
   tasks:
-    # --- STAP 1: Installeer kubectl (indien nodig) ---
+    # --- STAP 1: Installeer kubectl ---
     - name: Download en installeer kubectl binary
       become: true
       get_url:
-        # We pakken hier een recente stabiele versie
         url: "https://dl.k8s.io/release/v1.32.0/bin/linux/amd64/kubectl"
         dest: /usr/local/bin/kubectl
         mode: '0755'
 
     # --- STAP 2: Map voorbereiden ---
+    # Zeker weten dat de map bestaat en de juiste rechten heeft voor JOUW user (niet root)
     - name: Maak .kube map aan in home directory
       file:
         path: ~/.kube
         state: directory
         mode: '0700'
-
-    # --- STAP 3: Config ophalen van de Master ---
-    # We gebruiken hier 'delegate_to' om het bestand van de master (server) naar hier te trekken
-    - name: Haal kubeconfig op van de master node
-      fetch:
-        src: /etc/rancher/k3s/k3s.yaml
-        dest: ~/.kube/config
-        flat: yes
-      delegate_to: "{{ groups['server'][0] }}"
-      become: true # Nodig om /etc/rancher/k3s/k3s.yaml te lezen op de master
-
-    - name: Pas rechten aan van config (zodat jij hem mag lezen)
+    
+    # --- STAP 3: Rechten goedzetten ---
+    # Het bestand is door 'fetch' in Play 3 al neergezet, we hoeven alleen rechten te fixen
+    - name: Pas rechten aan van config
       file:
         path: ~/.kube/config
         mode: '0600'
 
     # --- STAP 4: De Fix (IP adres aanpassen) ---
-    - name: Wijzigt 127.0.0.1 naar het echte Master IP
+    - name: Wijzig 127.0.0.1 naar het echte Master IP
       replace:
         path: ~/.kube/config
-        # Zoek naar de localhost verwijzing die K3s er standaard in zet
         regexp: 'https://127.0.0.1:6443'
-        # Vervang dit door het IP van de eerste server uit je inventory
+        # Hier gebruiken we ansible_host (het echte IP) in plaats van inventory_hostname (de naam)
         replace: "https://{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}:6443"
