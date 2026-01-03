@@ -4,11 +4,11 @@ k3s_cluster:
   children:
     server:
       hosts:
-        192.168.124.31: # Je Master node (kies er 1)
+        192.168.124.129: # Je Master node (kies er 1)
     agent:
       hosts:
-        192.168.124.70: # Worker 1
-        192.168.124.91: # Worker 2
+        192.168.124.4:  # Worker 1
+        192.168.124.7: # Worker 2
 
   # Algemene variabelen voor alle nodes
   vars:
