@@ -90,8 +90,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: selfsigned-issuer
-    # ArgoCD stuurt zelf vaak al HTTPS, dit helpt Traefik het te begrijpen:
-    traefik.ingress.kubernetes.io/router.tls: "true"
+   # traefik.ingress.kubernetes.io/router.tls: "true"
     argocd.argoproj.io/sync-wave: "5" # Wacht!
     traefik.ingress.kubernetes.io/service.serversscheme: https
     traefik.ingress.kubernetes.io/service.serverstransport: insecure-transport@kubernetescrd
