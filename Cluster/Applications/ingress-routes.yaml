@@ -8,6 +8,8 @@ metadata:
     cert-manager.io/cluster-issuer: selfsigned-issuer
     # Wachten
     argocd.argoproj.io/sync-wave: "5"
+    # Wachtwoord toevoegen verwijzing naar longhorn-middleware
+    traefik.ingress.kubernetes.io/router.middlewares: longhorn-system-longhorn-auth-middleware@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
