@@ -1,6 +1,9 @@
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: selfsigned-issuer  
+  name: selfsigned-issuer
+  annotations:
+    # Wacht tot Cert-Manager klaar is (Wave 1 is lager dan 5)
+    argocd.argoproj.io/sync-wave: "5"  
 spec:
   selfSigned: {}

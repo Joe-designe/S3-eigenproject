@@ -6,6 +6,8 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: selfsigned-issuer
+    # Wachten
+    argocd.argoproj.io/sync-wave: "5"
 spec:
   tls:
     - hosts:
@@ -72,3 +74,30 @@ spec:
                 name: portainer
                 port:
                   number: 9000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argocd     # ArgoCD staat in zijn eigen namespace
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+    # ArgoCD stuurt zelf vaak al HTTPS, dit helpt Traefik het te begrijpen:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  tls:
+    - hosts:
+        - argocd.demo.local
+      secretName: argocd-secret-tls
+  rules:
+    - host: argocd.demo.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 80 # We sturen het naar de HTTP poort, Argo regelt de rest
