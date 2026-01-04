@@ -62,6 +62,8 @@ metadata:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: selfsigned-issuer
     argocd.argoproj.io/sync-wave: "5" # Wacht!
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: insecure-transport@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
@@ -78,7 +80,7 @@ spec:
               service:
                 name: portainer
                 port:
-                  number: 8000
+                  number: 9443
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -92,6 +94,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     argocd.argoproj.io/sync-wave: "5" # Wacht!
     traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: insecure-transport@kubernetescrd
 spec:
   ingressClassName: traefik
   tls:
