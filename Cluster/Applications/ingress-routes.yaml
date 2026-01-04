@@ -78,7 +78,7 @@ spec:
               service:
                 name: portainer
                 port:
-                  number: 9000
+                  number: 9443
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -107,4 +107,4 @@ spec:
               service:
                 name: argocd-server
                 port:
-                  number: 80 # We sturen het naar de HTTP poort, Argo regelt naar 443
+                  number: 443
