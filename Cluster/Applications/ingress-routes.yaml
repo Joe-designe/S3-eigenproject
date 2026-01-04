@@ -9,6 +9,7 @@ metadata:
     # Wachten
     argocd.argoproj.io/sync-wave: "5"
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - longhorn.demo.local
@@ -35,6 +36,7 @@ metadata:
     cert-manager.io/cluster-issuer: selfsigned-issuer
     argocd.argoproj.io/sync-wave: "5" # Wacht!
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - grafana.demo.local
@@ -61,6 +63,7 @@ metadata:
     cert-manager.io/cluster-issuer: selfsigned-issuer
     argocd.argoproj.io/sync-wave: "5" # Wacht!
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - portainer.demo.local
@@ -89,6 +92,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     argocd.argoproj.io/sync-wave: "5" # Wacht!
 spec:
+  ingressClassName: traefik
   tls:
     - hosts:
         - argocd.demo.local
@@ -103,4 +107,4 @@ spec:
               service:
                 name: argocd-server
                 port:
-                  number: 80 # We sturen het naar de HTTP poort, Argo regelt de rest
+                  number: 80 # We sturen het naar de HTTP poort, Argo regelt naar 443
