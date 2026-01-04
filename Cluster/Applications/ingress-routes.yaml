@@ -78,7 +78,7 @@ spec:
               service:
                 name: portainer
                 port:
-                  number: 9443
+                  number: 8000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -91,6 +91,7 @@ metadata:
     # ArgoCD stuurt zelf vaak al HTTPS, dit helpt Traefik het te begrijpen:
     traefik.ingress.kubernetes.io/router.tls: "true"
     argocd.argoproj.io/sync-wave: "5" # Wacht!
+    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   ingressClassName: traefik
   tls:
