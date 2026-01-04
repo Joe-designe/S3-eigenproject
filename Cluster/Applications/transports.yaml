@@ -1,0 +1,15 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: insecure-transport
+  namespace: argocd
+spec:
+  insecureSkipVerify: true
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: ServersTransport
+metadata:
+  name: insecure-transport
+  namespace: portainer
+spec:
+  insecureSkipVerify: true
