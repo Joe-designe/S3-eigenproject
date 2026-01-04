@@ -1,7 +1,7 @@
 ---
-# ==========================================
+# ==============================================================================
 # FASE 1: K3s INSTALLATIE
-# ==========================================
+# ==============================================================================
 
 - name: 1. Installeer K3s Master
   hosts: server
@@ -36,9 +36,9 @@
       args:
         creates: /usr/local/bin/k3s-agent
 
-# ==========================================
+# ==============================================================================
 # FASE 2: CONFIGURATIE LOCALHOST (ANSIBLE VM)
-# ==========================================
+# ==============================================================================
 
 - name: 3. Configureer Ansible VM en haal Config op
   hosts: server
@@ -54,9 +54,8 @@
 - name: 4. Configureer lokaal kubectl (Ansible VM)
   hosts: localhost
   connection: local
-  gather_facts: false # Even uit voor snelheid, we zetten het later aan voor Argo
+  gather_facts: false # uit voor snelheid, we zetten het later aan voor Argo
   tasks:
-    # --- STAP 1: Installeer kubectl ---
     - name: Download en installeer kubectl binary
       become: true
       get_url:
@@ -64,36 +63,32 @@
         dest: /usr/local/bin/kubectl
         mode: '0755'
 
-    # --- STAP 2: Map voorbereiden ---
     - name: Maak .kube map aan in home directory
       file:
         path: ~/.kube
         state: directory
         mode: '0700'
     
-    # --- STAP 3: Rechten goedzetten ---
     - name: Pas rechten aan van config
       file:
         path: ~/.kube/config
         mode: '0600'
 
-    # --- STAP 4: De Fix (IP adres aanpassen) ---
     - name: Wijzig 127.0.0.1 naar het echte Master IP
       replace:
         path: ~/.kube/config
         regexp: 'https://127.0.0.1:6443'
         replace: "https://{{ hostvars[groups['server'][0]]['ansible_host'] | default(groups['server'][0]) }}:6443"
 
-# ==========================================
+# ==============================================================================
 # FASE 3: ARGOCD & APPS UITROLLEN
-# ==========================================
+# ==============================================================================
 
 - name: 5. Installeer ArgoCD en Bootstrap Cluster
   hosts: localhost
   connection: local
   gather_facts: true # NODIG voor ansible_env.HOME
   tasks:
-    # --- DEEL 1: ArgoCD Installatie ---
     - name: Maak ArgoCD namespace aan
       kubernetes.core.k8s:
         name: argocd
@@ -120,9 +115,8 @@
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
-    # --- DEEL 2: De Longhorn Fix ---
-    
-    - name: "[FIX] Maak Longhorn namespace aan (nodig voor SA)"
+    # --- De Longhorn voorbereiding ---
+    - name: "[FIX] Maak Longhorn namespace aan"
       kubernetes.core.k8s:
         name: longhorn-system
         api_version: v1
@@ -159,15 +153,127 @@
             name: cluster-admin
             apiGroup: rbac.authorization.k8s.io
 
-    # --- DEEL 3: De Bootstrap Stap ---
-    
+    # --- De Bootstrap Stap ---
     - name: Apply Root App (Bootstrap het cluster)
       command: kubectl apply -f https://raw.githubusercontent.com/Joe-designe/S3-eigenproject/main/Cluster/root-app.yaml
       environment:
         KUBECONFIG: "{{ ansible_env.HOME }}/.kube/config"
 
-    # --- DEEL 4: Wachtwoord tonen ---
+# ==============================================================================
+# FASE 4: BEVEILIGING (FIREWALL / HARDENING) - ALS LAATSTE!
+# ==============================================================================
 
+- name: 6. Configureer Firewall (UFW) voor K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  vars:
+    trusted_subnet: "192.168.124.0/24"  # Pas aan indien nodig
+
+  tasks:
+    - name: Zorg dat UFW is geïnstalleerd
+      apt:
+        name: ufw
+        state: present
+
+    - name: Zet standaard beleid op deny (inkomend)
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Zet logging aan
+      community.general.ufw:
+        logging: 'on'
+
+    - name: Sta SSH toe (Poort 22)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: "SSH toegang voor beheer"
+
+    - name: Sta al het verkeer toe vanuit het interne subnet
+      community.general.ufw:
+        rule: allow
+        src: "{{ trusted_subnet }}"
+        comment: "Cluster nodes volledig vertrouwen"
+
+    - name: Sta HTTP (80) toe
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+        comment: "Traefik Ingress HTTP"
+
+    - name: Sta HTTPS (443) toe
+      community.general.ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+        comment: "Traefik Ingress HTTPS"
+
+    - name: Sta Portainer NodePort/LB toe (9443)
+      community.general.ufw:
+        rule: allow
+        port: '9443'
+        proto: tcp
+        comment: "Portainer Direct Access"
+
+    - name: Sta Kubernetes API toe (Alleen op Master)
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        comment: "K3s API Server"
+      when: "'server' in group_names"
+
+    - name: Enable UFW en start direct
+      community.general.ufw:
+        state: enabled
+
+# ==============================================================================
+# FASE 5: BEVEILIGING ANSIBLE CONTROL NODE
+# ==============================================================================
+
+- name: 7. Configureer Firewall voor Ansible Control Node
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+    - name: Zorg dat UFW is geïnstalleerd
+      apt:
+        name: ufw
+        state: present
+
+    - name: Zet standaard incoming op deny
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Zet standaard outgoing op allow
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    - name: Sta SSH toe (Voor beheerder)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: "SSH toegang voor beheerder"
+
+    - name: Enable UFW op Ansible VM
+      community.general.ufw:
+        state: enabled
+
+# ==============================================================================
+# FASE 6: AFRONDING & INFO
+# ==============================================================================
+
+- name: 8. Toon eindresultaat
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
     - name: Haal ArgoCD admin wachtwoord op
       shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
       environment:
@@ -178,13 +284,17 @@
       debug:
         msg: 
           - "=============================================="
-          - "AUTOMATISERING VOLTOOID!"
+          - "🚀 INSTALLATIE & HARDENING SUCCESVOL!"
+          - "=============================================="
+          - "ArgoCD User: admin"
+          - "ArgoCD Pass: {{ argocd_password.stdout }}"
           - "----------------------------------------------"
-          - "ArgoCD Gebruikersnaam: admin"
-          - "ArgoCD Wachtwoord:     {{ argocd_password.stdout }}"
+          - "🛡️  Beveiliging:"
+          - "Firewall is actief op alle nodes & Ansible VM."
           - "----------------------------------------------"
-          - "Dashboard URL's (via Ingress):"
-          - "  - https://portainer.<MASTER-IP>.nip.io"
-          - "  - https://longhorn.<MASTER-IP>.nip.io"
-          - "  - https://grafana.<MASTER-IP>.nip.io"
+          - "Dashboard URL's:"
+          - "  - https://argocd.demo.local"
+          - "  - https://longhorn.demo.local"
+          - "  - https://grafana.demo.local"
+          - "  - https://portainer.demo.local"
           - "=============================================="

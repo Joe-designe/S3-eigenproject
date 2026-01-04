@@ -1,0 +1,116 @@
+---
+- name: Configureer Firewall (UFW) voor K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  vars:
+    # Range netwerk
+    trusted_subnet: "192.168.124.0/24" 
+
+  tasks:
+    - name: Zorg dat UFW is geïnstalleerd
+      apt:
+        name: ufw
+        state: present
+
+    # --- STAP 1: Reset & Basisregels ---
+    # We zetten eerst logging aan en de default op DENY
+    - name: Zet standaard beleid op deny (inkomend)
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    - name: Zet logging aan
+      community.general.ufw:
+        logging: 'on'
+
+    # --- STAP 2: --- Sluit jezelf niet buiten! ---
+    - name: Sta SSH toe (Poort 22)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: "SSH toegang voor beheer"
+
+    # --- STAP 3: Cluster Communicatie (Vertrouwd Netwerk) ---
+    # Verbinding tussen Longhorn, Flannel (VXLAN) en metrics
+    # Nodes moeten elkaar volledig vertrouwen.
+    - name: Sta al het verkeer toe vanuit het interne subnet
+      community.general.ufw:
+        rule: allow
+        src: "{{ trusted_subnet }}"
+        comment: "Volledige toegang voor cluster nodes onderling"
+
+    # --- STAP 4: Ingress Punten (Apps bereikbaar maken) ---
+    - name: Sta HTTP (80) toe voor Traefik Ingress
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+        comment: "Traefik Ingress HTTP"
+
+    - name: Sta HTTPS (443) toe voor Traefik Ingress
+      community.general.ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+        comment: "Traefik Ingress HTTPS"
+
+    - name: Sta Portainer NodePort/LoadBalancer toe (9443)
+      community.general.ufw:
+        rule: allow
+        port: '9443'
+        proto: tcp
+        comment: "Portainer Direct Access"
+
+    # --- STAP 5: Master Specifieke Regels ---
+    - name: Sta Kubernetes API toe (Alleen op Master)
+      community.general.ufw:
+        rule: allow
+        port: '6443'
+        proto: tcp
+        comment: "K3s API Server"
+      when: "'server' in group_names"
+
+    # --- STAP 6: Activeer de Firewall ---
+    - name: Enable UFW en start direct
+      community.general.ufw:
+        state: enabled
+
+# ==========================================
+# DEEL 2: Beveiliging Ansible Control Node (Localhost)
+# ==========================================
+- name: Configureer Firewall voor Ansible Control Node
+  hosts: localhost
+  connection: local
+  become: true
+  tasks:
+    - name: Zorg dat UFW is geïnstalleerd (Ansible VM)
+      apt:
+        name: ufw
+        state: present
+
+    # --- STAP 1: Beleid instellen ---
+    # Inkomend alles blokkeren (veilig)
+    - name: Zet standaard incoming op deny
+      community.general.ufw:
+        direction: incoming
+        policy: deny
+
+    # Uitgaand alles toestaan (NODIG voor Ansible & Kubectl naar cluster!)
+    - name: Zet standaard outgoing op allow
+      community.general.ufw:
+        direction: outgoing
+        policy: allow
+
+    # --- STAP 2: Toegang tot deze VM ---
+    - name: Sta SSH toe (zodat je er zelf nog in kan)
+      community.general.ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+        comment: "SSH toegang voor beheerder"
+
+    # --- STAP 3: Activeren ---
+    - name: Enable UFW op Ansible VM
+      community.general.ufw:
+        state: enabled

@@ -9,6 +9,11 @@ k3s_cluster:
       hosts:
         192.168.124.4:  # Worker 1
         192.168.124.7: # Worker 2
+# ansible control node
+ansible_control:
+  hosts:
+    localhost:
+      ansible_connection: local
 
   # Algemene variabelen voor alle nodes
   vars:
