@@ -13,7 +13,7 @@
         state: directory
         mode: '0755'
 
-    - name: Plaats Traefik Config (Schakel SSL verificatie uit)
+    - name: Plaats Traefik Config (Schakel SSL verificatie uit Selfsigned wordt gebruikt)
       copy:
         dest: /var/lib/rancher/k3s/server/manifests/traefik-config.yaml
         content: |
