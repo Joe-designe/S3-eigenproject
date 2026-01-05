@@ -12,7 +12,7 @@ spec:
     helm:
       values: |
         grafana:
-          adminPassword: "admin" # Verander dit z.s.m. in de UI!
+          adminPassword: "admin" # AANBEVOLEN: Verander dit z.s.m. in de UI!
           persistence:
             enabled: true
             storageClassName: longhorn
