@@ -48,10 +48,13 @@ Pas het bestand `inventory.yml` aan met de juiste IP-adressen van je nodes.
 Voer het Ansible playbook uit om de cluster te bouwen:
 
 ```bash
+ansible-playbook -i inventory.yml prepare_nodes.yml -K
 ansible-playbook -i inventory.yml deploy_cluster.yml -K
-
+```
 🔄 GitOps Workflow (ArgoCD)
 Na installatie draait ArgoCD in de cluster. Het luistert naar wijzigingen in de map Cluster/Applications.
+**Aanbevolen!**
+**Wijzig longhorn wachtwoord**
 
 Wijziging: Commit een aanpassing (bijv. replicaCount of een nieuwe app) naar de main branch.
 
