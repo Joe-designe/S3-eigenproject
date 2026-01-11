@@ -83,6 +83,6 @@ Netwerk: Alleen noodzakelijke poorten (22, 80, 443, 6443) staan open. Interne cl
 ## ℹ️ Status & Disclaimer
 Versie: 1.0 (Final Release).
 
-Updates: Automatische OS-updates zijn bewust uitgeschakeld om stabiliteit van kernel-modules (iSCSI) te garanderen. Updates verlopen via beheerde Ansible-taken.
+
 
 
