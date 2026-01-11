@@ -80,7 +80,7 @@ ansible all -i inventory.yml -m command -a "ufw status verbose" --become -K
 
 | Applicatie | Gebruikersnaam | Wachtwoord | Opmerking |
 | :--- | :--- | :--- | :--- |
-| **ArgoCD** | `admin` | *(Automatisch gegenereerd)* | Het wachtwoord wordt gegenereerd en getoond in de output van `deploy_clusterv1.yml`. |
+| **ArgoCD** | `admin` | *(Automatisch gegenereerd)* | Het wachtwoord wordt gegenereerd en getoond in de output van `deploy_cluster.yml`. |
 | **Longhorn** | `admin` | `longhornadmin` | ⚠️ **Let op:** Dit is een standaard wachtwoord. Wijzig dit direct na installatie in de Kubernetes Secrets! |
 | **Portainer** | *(Zelf aanmaken)* | *(Zelf aanmaken)* | **Let op:** Je moet binnen 5 minuten na installatie een account aanmaken. Ben je te laat? Herstart dan de Portainer-pod. |
 | **Grafana** | `admin` | `admin` | Dit is de standaard login. Het wordt sterk aangeraden dit direct te wijzigen. |
