@@ -45,6 +45,26 @@ Zorg dat SSH-toegang via keys (Ed25519) is ingesteld vanaf de Ansible Controller
 ### 2. Configureer Inventory
 Pas het bestand `inventory.yml` aan met de juiste IP-adressen van je nodes.
 
+## ⚠️ Belangrijke Configuratie: Netwerk & Firewall
+
+**Let op:** Voordat je de playbooks uitvoert, is het cruciaal dat je het IP-subnet aanpast naar jouw eigen netwerksituatie. Als je dit niet doet, blokkeert de firewall de toegang tot de Web UI's (ArgoCD, Longhorn, Grafana).
+
+### Pas het `trusted_subnet` aan
+
+Open het bestand `deploy_cluster.yml`  (zoek naar de variabele `trusted_subnet`.
+
+Pas de waarde `"192.168.154.0/24"` aan naar de range van jouw eigen thuis- of bedrijfsnetwerk.
+
+```yaml
+- name: 6. Configureer Firewall (UFW) voor K3s Cluster
+  hosts: k3s_cluster
+  become: true
+  vars:
+    # 🛑 PAS DIT AAN NAAR JE EIGEN SUBNET! 🛑
+    # Voorbeeld: Als jouw IP 192.168.1.50 is, gebruik dan "192.168.1.0/24"
+    trusted_subnet: "192.168.154.0/24"
+```
+
 ### 3. Start Deployment
 Voer de Ansible playbooks uit om de nodes voor te bereiden en de cluster te bouwen:
 
@@ -60,7 +80,7 @@ ansible all -i inventory.yml -m command -a "ufw status verbose" --become -K
 
 | Applicatie | Gebruikersnaam | Wachtwoord | Opmerking |
 | :--- | :--- | :--- | :--- |
-| **ArgoCD** | `admin` | *(Automatisch gegenereerd)* | Het wachtwoord wordt gegenereerd en getoond in de output van `deploy_clusterv1.yml`. |
+| **ArgoCD** | `admin` | *(Automatisch gegenereerd)* | Het wachtwoord wordt gegenereerd en getoond in de output van `deploy_cluster.yml`. |
 | **Longhorn** | `admin` | `longhornadmin` | ⚠️ **Let op:** Dit is een standaard wachtwoord. Wijzig dit direct na installatie in de Kubernetes Secrets! |
 | **Portainer** | *(Zelf aanmaken)* | *(Zelf aanmaken)* | **Let op:** Je moet binnen 5 minuten na installatie een account aanmaken. Ben je te laat? Herstart dan de Portainer-pod. |
 | **Grafana** | `admin` | `admin` | Dit is de standaard login. Het wordt sterk aangeraden dit direct te wijzigen. |
@@ -81,5 +101,5 @@ Change Management: De implementatie van HTTPS en Cert-Manager is uitgevoerd volg
 Netwerk: Alleen noodzakelijke poorten (22, 80, 443, 6443) staan open. Interne cluster-communicatie verloopt via een vertrouwd subnet.
 
 ## ℹ️ Status & Disclaimer
-Versie: 1.0 (Final Release).
+Versie: 1.0
 
