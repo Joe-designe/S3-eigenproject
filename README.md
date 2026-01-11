@@ -32,7 +32,8 @@ De infrastructuur bestaat uit virtuele machines die via een intern netwerk commu
 ## 📂 Projectstructuur
 
 * `ansibleproject/` - Bevat de Ansible playbooks en inventory voor de infrastructuur.
-    * `deploy_cluster.yml` - Hoofdscript voor installatie K3s, ArgoCD, Config en UFW regels.
+    * `prepare_nodes.yml` - Voorbereiding nodes (OS dependencies, iSCSI).
+    * `deploy_cluster.yml` - Hoofdscript voor installatie K3s, ArgoCD en Config.
 * `Cluster/Applications/` - De *Single Source of Truth* voor ArgoCD.
     * Alle YAML-bestanden in deze map worden automatisch uitgerold door de **Root App**.
 
@@ -45,16 +46,15 @@ Zorg dat SSH-toegang via keys (Ed25519) is ingesteld vanaf de Ansible Controller
 Pas het bestand `inventory.yml` aan met de juiste IP-adressen van je nodes.
 
 ### 3. Start Deployment
-Voer het Ansible playbook uit om de cluster te bouwen:
+Voer de Ansible playbooks uit om de nodes voor te bereiden en de cluster te bouwen:
 
 ```bash
 ansible-playbook -i inventory.yml prepare_nodes.yml -K
 ansible-playbook -i inventory.yml deploy_cluster.yml -K
 ```
+**Aanbevolen: Wijzig na installatie direct het standaard Longhorn wachtwoord in de Kubernetes Secrets.**
 🔄 GitOps Workflow (ArgoCD)
 Na installatie draait ArgoCD in de cluster. Het luistert naar wijzigingen in de map Cluster/Applications.
-**Aanbevolen!**
-**Wijzig longhorn wachtwoord**
 
 Wijziging: Commit een aanpassing (bijv. replicaCount of een nieuwe app) naar de main branch.
 
