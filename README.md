@@ -52,9 +52,21 @@ Voer de Ansible playbooks uit om de nodes voor te bereiden en de cluster te bouw
 ansible-playbook -i inventory.yml prepare_nodes.yml -K
 ansible-playbook -i inventory.yml deploy_cluster.yml -K
 ```
-**Aanbevolen: Wijzig na installatie direct het standaard Longhorn wachtwoord in de Kubernetes Secrets.**
+**Check Firewall regels**
+```bash
+ansible all -i inventory.yml -m command -a "ufw status verbose" --become -K
+```
+## 🔑 Standaard Login Gegevens
 
-🔄 GitOps Workflow (ArgoCD)
+| Applicatie | Gebruikersnaam | Wachtwoord | Opmerking |
+| :--- | :--- | :--- | :--- |
+| **ArgoCD** | `admin` | *(Automatisch gegenereerd)* | Het wachtwoord wordt gegenereerd en getoond in de output van `deploy_clusterv1.yml`. |
+| **Longhorn** | `admin` | `longhornadmin` | ⚠️ **Let op:** Dit is een standaard wachtwoord. Wijzig dit direct na installatie in de Kubernetes Secrets! |
+| **Portainer** | *(Zelf aanmaken)* | *(Zelf aanmaken)* | **Let op:** Je moet binnen 5 minuten na installatie een account aanmaken. Ben je te laat? Herstart dan de Portainer-pod. |
+| **Grafana** | `admin` | `admin` | Dit is de standaard login. Het wordt sterk aangeraden dit direct te wijzigen. |
+
+
+## 🔄 GitOps Workflow (ArgoCD)
 Na installatie draait ArgoCD in de cluster. Het luistert naar wijzigingen in de map Cluster/Applications.
 
 Wijziging: Commit een aanpassing (bijv. replicaCount of een nieuwe app) naar de main branch.
@@ -63,12 +75,14 @@ Sync: ArgoCD detecteert de wijziging (Auto-Sync) en past de cluster-status aan.
 
 Self-Heal: Handmatige wijzigingen op de cluster worden automatisch teruggedraaid door ArgoCD.
 
-🛡️ Security & ITIL
+## 🛡️ Security & ITIL
 Change Management: De implementatie van HTTPS en Cert-Manager is uitgevoerd volgens een formeel ITIL Change Management proces (RFC), inclusief testen en documentatie.
 
 Netwerk: Alleen noodzakelijke poorten (22, 80, 443, 6443) staan open. Interne cluster-communicatie verloopt via een vertrouwd subnet.
 
-ℹ️ Status & Disclaimer
+## ℹ️ Status & Disclaimer
 Versie: 1.0 (Final Release).
 
 Updates: Automatische OS-updates zijn bewust uitgeschakeld om stabiliteit van kernel-modules (iSCSI) te garanderen. Updates verlopen via beheerde Ansible-taken.
+
+
