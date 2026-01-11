@@ -101,5 +101,5 @@ Change Management: De implementatie van HTTPS en Cert-Manager is uitgevoerd volg
 Netwerk: Alleen noodzakelijke poorten (22, 80, 443, 6443) staan open. Interne cluster-communicatie verloopt via een vertrouwd subnet.
 
 ## ℹ️ Status & Disclaimer
-Versie: 1.0
+Releaseversie: 1.0
 
