@@ -1,6 +1,6 @@
 # 🚀 Geautomatiseerde Kubernetes Cluster (K3s) met Ansible & GitOps
 
-![Status](https://img.shields.io/badge/Status-Completed-success) ![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-blue) ![IaC](https://img.shields.io/badge/IaC-Ansible-red) ![GitOps](https://img.shields.io/badge/GitOps-ArgoCD-orange)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s-blue) ![IaC](https://img.shields.io/badge/IaC-Ansible-red) ![GitOps](https://img.shields.io/badge/GitOps-ArgoCD-orange)
 
 Dit project bevat de volledige *Infrastructure as Code* (IaC) en *GitOps* configuratie voor het automatisch uitrollen en beheren van een Kubernetes-cluster. Het project is ontwikkeld voor de casus **"TechSoft"** om consistentie, beveiliging en snelheid van deployments te waarborgen.
 
