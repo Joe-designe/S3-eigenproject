@@ -53,6 +53,7 @@ ansible-playbook -i inventory.yml prepare_nodes.yml -K
 ansible-playbook -i inventory.yml deploy_cluster.yml -K
 ```
 **Aanbevolen: Wijzig na installatie direct het standaard Longhorn wachtwoord in de Kubernetes Secrets.**
+
 🔄 GitOps Workflow (ArgoCD)
 Na installatie draait ArgoCD in de cluster. Het luistert naar wijzigingen in de map Cluster/Applications.
 
