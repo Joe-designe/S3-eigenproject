@@ -49,7 +49,7 @@ Pas het bestand `inventory.yml` aan met de juiste IP-adressen van je nodes.
 
 **Let op:** Voordat je de playbooks uitvoert, is het cruciaal dat je het IP-subnet aanpast naar jouw eigen netwerksituatie. Als je dit niet doet, blokkeert de firewall de toegang tot de Web UI's (ArgoCD, Longhorn, Grafana).
 
-### Stap 1: Pas het `trusted_subnet` aan
+### Pas het `trusted_subnet` aan
 
 Open het bestand `deploy_cluster.yml`  (zoek naar de variabele `trusted_subnet`.
 
