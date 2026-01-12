@@ -108,6 +108,7 @@ Dit project is gebouwd en getest met onderstaande specificaties. Voor de beste s
 ### 📋 Versies
 | Component | Versie |
 |-----------|--------|
+| **Ansible pakket** | `13.2.0` |
 | **Ansible Core** | `2.20.1` |
 | **Python** | `3.12.3` |
 
@@ -115,17 +116,15 @@ Dit project is gebouwd en getest met onderstaande specificaties. Voor de beste s
 Dit project maakt gebruik van **pipx** voor isolatie. Om exact deze omgeving na te bouwen, voer je de volgende commando's uit:
 
 ```bash
-# 1. Installeer pipx (indien nog niet aanwezig)
+# 1. Installeer pipx
 sudo apt update
 sudo apt install pipx
 pipx ensurepath
 
-# 2. Installeer Ansible (Hoofdpakket)
-# We gebruiken --include-deps om zeker te zijn dat alle python dependencies meekomen
-pipx install --include-deps ansible
+# 2. Installeer Ansible (Specifieke versie)
+pipx install --include-deps ansible==13.2.0
 
 # 3. CRUCIAAL: Injecteer de Kubernetes Python Library
-# Dit is vereist om de 'kubernetes.core.k8s' module te laten werken binnen de geïsoleerde pipx omgeving
 pipx inject ansible kubernetes
 ```
 
