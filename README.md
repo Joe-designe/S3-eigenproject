@@ -110,22 +110,22 @@ Dit project is gebouwd en getest met onderstaande specificaties. Voor de beste s
 |-----------|--------|
 | **Ansible Core** | `2.20.1` |
 | **Python** | `3.12.3` |
-| **Jinja2** | `3.1.6` |
-| **OS** | Ubuntu 24.0.4. (via pipx) |
 
 ### ⚙️ Installatie (Reproductie)
 Dit project maakt gebruik van **pipx** voor isolatie. Om exact deze omgeving na te bouwen, voer je de volgende commando's uit:
 
 ```bash
 # 1. Installeer pipx (indien nog niet aanwezig)
-sudo apt update && sudo apt install pipx
+sudo apt update
+sudo apt install pipx
 pipx ensurepath
 
-# 2. Installeer de specifieke Ansible Core versie
-pipx install ansible-core==2.20.1
+# 2. Installeer Ansible (Hoofdpakket)
+# We gebruiken --include-deps om zeker te zijn dat alle python dependencies meekomen
+pipx install --include-deps ansible
 
-# 3. Injecteer de benodigde Python libraries in de Ansible omgeving
-# (Cruciaal voor de kubernetes.core.k8s module)
+# 3. CRUCIAAL: Injecteer de Kubernetes Python Library
+# Dit is vereist om de 'kubernetes.core.k8s' module te laten werken binnen de geïsoleerde pipx omgeving
 pipx inject ansible kubernetes
 ```
 
